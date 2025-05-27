@@ -46,9 +46,21 @@ load_dotenv()
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'a-mais-famosissima-chave-secreta-com-outdoor-apontando-para-ela-com-nome-sobrenome-cpf-e-rg')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Carregar DEBUG da variável de ambiente DJANGO_DEBUG, padrão True para desenvolvimento
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+# Carregar ALLOWED_HOSTS da variável de ambiente DJANGO_ALLOWED_HOSTS (lista separada por vírgulas)
+ALLOWED_HOSTS_STR = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+
+if ALLOWED_HOSTS_STR:
+    # Se a variável de ambiente estiver definida, use os hosts especificados
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
+elif DEBUG:
+    # Se DEBUG for True e a variável de ambiente não estiver definida, use o fallback para desenvolvimento
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+else:
+    # Se DEBUG for False e a variável de ambiente não estiver definida, use uma lista vazia (segurança em produção)
+    ALLOWED_HOSTS = []
 
 # Configurações do OSMnx 
 OSMNX_PLACE_PREFIX = os.environ.get('OSMNX_PLACE_PREFIX', 'marica') # Utilizar 'marica' como padrão

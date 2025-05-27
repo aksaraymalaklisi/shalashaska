@@ -53,8 +53,8 @@ function MapDisplay() {
             end_lat: endPoint.lat,
             end_lon: endPoint.lng,
         });
-        // Modifica a URL para incluir o tipo de rede
-        const apiUrl = `http://127.0.0.1:8000/api/pequod/pathfinder/${networkType}/?${params.toString()}`;
+        // Modifica a URL para incluir o tipo de rede, com fallback para localhost
+        const apiUrl = `${import.meta.env.VITE_API_BASE || 'http://localhost:8000'}/api/pequod/pathfinder/${networkType}/?${params}`;
 
         try {
             const response = await fetch(apiUrl);
