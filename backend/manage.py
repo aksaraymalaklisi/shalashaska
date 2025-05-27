@@ -3,10 +3,6 @@
 import os
 import sys
 
-# (!) Solução temporária para o aviso do GDAL_DATA 
-# Temporária, pois depende do manage.py. Isso não vai rodar em produção.
-os.environ['GDAL_DATA'] = os.path.join(f'{os.sep}'.join(sys.executable.split(os.sep)[:-1]), 'Library', 'share', 'gdal')
-
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'queequeg.settings')

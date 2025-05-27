@@ -11,23 +11,59 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import subprocess
+from dotenv import load_dotenv
+
+# Configura a variável de ambiente GDAL_DATA se ainda não estiver definida
+def configure_gdal_data():
+    if 'GDAL_DATA' not in os.environ:
+        # Tenta localizar o diretório de dados do GDAL usando gdal-config
+        try:
+            gdal_data = subprocess.check_output(['gdal-config', '--datadir'], text=True).strip()
+            os.environ['GDAL_DATA'] = gdal_data
+            # print(f"GDAL_DATA configurado para: {gdal_data}") # Opcional: para depuração
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            # Fallback: permite que o GDAL encontre seu próprio diretório de dados
+            # print("Não foi possível encontrar gdal-config ou GDAL_DATA não definido. Deixando o GDAL lidar com isso.") # Opcional: para depuração
+            pass
+
+# Chama a função de configuração durante a inicialização das configurações
+configure_gdal_data()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # (!) Trocar chave secreta hard-coded e carregá-la de uma .env
-SECRET_KEY = 'a-mais-famosissima-chave-secreta-com-outdoor-apontando-para-ela-com-nome-sobrenome-cpf-e-rg'
+# Carregar SECRET_KEY da variável de ambiente DJANGO_SECRET_KEY, com fallback para a chave atual
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'a-mais-famosissima-chave-secreta-com-outdoor-apontando-para-ela-com-nome-sobrenome-cpf-e-rg')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Carregar DEBUG da variável de ambiente DJANGO_DEBUG, padrão True para desenvolvimento
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = []
+# Carregar ALLOWED_HOSTS da variável de ambiente DJANGO_ALLOWED_HOSTS (lista separada por vírgulas)
+ALLOWED_HOSTS_STR = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
 
+if ALLOWED_HOSTS_STR:
+    # Se a variável de ambiente estiver definida, use os hosts especificados
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_STR.split(',')]
+elif DEBUG:
+    # Se DEBUG for True e a variável de ambiente não estiver definida, use o fallback para desenvolvimento
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+else:
+    # Se DEBUG for False e a variável de ambiente não estiver definida, use uma lista vazia (segurança em produção)
+    ALLOWED_HOSTS = []
+
+# Configurações do OSMnx 
+OSMNX_PLACE_PREFIX = os.environ.get('OSMNX_PLACE_PREFIX', 'marica') # Utilizar 'marica' como padrão
 
 # Application definition
 
