@@ -15,7 +15,7 @@ try:
         print(f"Attempting to load graph from: {GRAPH_FILEPATH}")
         G = ox.load_graphml(GRAPH_FILEPATH)
         # Garantir que os atributos de peso sejam do tipo correto (ex: float)
-        for u, v, data in G.edges(data=True):
+        for _u, _v, data in G.edges(data=True):
             if 'length' in data:
                 data['length'] = float(data['length'])
             # Converta outros atributos de peso se você os tiver (ex: 'travel_time')
