@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pequod-backend
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/map_data:/app/map_data
+      - ./backend/cache:/app/cache
+      - ./backend/db.sqlite3:/app/db.sqlite3
+    ports:
+      - "8000:8000"
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pequod-frontend
+    ports:
+      - "5173:80"
+    restart: unless-stopped
