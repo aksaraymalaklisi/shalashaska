@@ -5,7 +5,16 @@ import sys
 
 # (!) Solução temporária para o aviso do GDAL_DATA 
 # Temporária, pois depende do manage.py. Isso não vai rodar em produção.
-os.environ['GDAL_DATA'] = os.path.join(f'{os.sep}'.join(sys.executable.split(os.sep)[:-1]), 'Library', 'share', 'gdal')
+# Configure GDAL_DATA if not already set
+if 'GDAL_DATA' not in os.environ:
+    # Try common locations or use environment-specific detection
+    import subprocess
+    try:
+        gdal_data = subprocess.check_output(['gdal-config', '--datadir'], text=True).strip()
+        os.environ['GDAL_DATA'] = gdal_data
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback: let GDAL find its own data directory
+        pass
 
 def main():
     """Run administrative tasks."""

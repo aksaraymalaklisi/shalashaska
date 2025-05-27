@@ -21,6 +21,7 @@ function MapDisplay() {
     const [path, setPath] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [networkType, setNetworkType] = useState('drive'); // Novo estado para o tipo de rede
 
     const handleMapClick = (e) => {
         if (!startPoint) {
@@ -52,7 +53,8 @@ function MapDisplay() {
             end_lat: endPoint.lat,
             end_lon: endPoint.lng,
         });
-        const apiUrl = `http://127.0.0.1:8000/api/pequod/pathfinder/?${params.toString()}`;
+        // Modifica a URL para incluir o tipo de rede
+        const apiUrl = `http://127.0.0.1:8000/api/pequod/pathfinder/${networkType}/?${params.toString()}`;
 
         try {
             const response = await fetch(apiUrl);
@@ -89,6 +91,22 @@ function MapDisplay() {
             <p>Clique no mapa para definir o ponto de partida, depois o ponto de destino.</p>
             {startPoint && <p><strong>Partida (Clique):</strong> Lat: {startPoint.lat.toFixed(5)}, Lng: {startPoint.lng.toFixed(5)}</p>}
             {endPoint && <p><strong>Destino (Clique):</strong> Lat: {endPoint.lat.toFixed(5)}, Lng: {endPoint.lng.toFixed(5)}</p>}
+
+            {/* Seletor para o tipo de rede */}
+            <div style={{ marginBottom: '10px' }}>
+                <label htmlFor="networkType">Tipo de Rede:</label>
+                <select
+                    id="networkType"
+                    value={networkType}
+                    onChange={(e) => setNetworkType(e.target.value)}
+                    style={{ marginLeft: '10px', padding: '5px' }}
+                >
+                    <option value="drive">Carro</option>
+                    <option value="bike">Bicicleta</option>
+                    <option value="walk">Caminhada</option>
+                </select>
+            </div>
+
             <button onClick={fetchRoute} disabled={!startPoint || !endPoint || loading} style={{padding: '8px 12px', marginRight: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                 {loading ? 'Calculando...' : 'Encontrar Rota'}
             </button>

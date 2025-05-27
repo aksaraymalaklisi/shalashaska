@@ -5,5 +5,5 @@ from . import views # Importa as views do app atual
 app_name = 'pequod'
 
 urlpatterns = [
-    path('pathfinder/', views.pathfinder_view, name='pathfinder'),
+    path('pathfinder/<str:network_type>/', views.pathfinder_view, name='pathfinder'),
 ]
