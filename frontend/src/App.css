@@ -1,0 +1,11 @@
+/*
+  Isso deve ser alterado no futuro para aplicar o CSS diretamente nos componentes.
+  Provavelmente com styled ou tailwind.
+*/
+
+body, html, #root, .App {
+  margin: 0 auto;
+  padding: 0;
+  height: 100%;
+  font-family: 'Comic Sans MS', cursive;
+}
