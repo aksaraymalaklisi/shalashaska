@@ -2,6 +2,7 @@ import os
 import osmnx as ox
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from unidecode import unidecode
 
 
 # Simplificar o comando e baixar novos tipos de redes
@@ -26,13 +27,17 @@ class Command(BaseCommand):
         place_query = options['place_query']
         network_types_to_fetch = options['network_types']
 
+        # Obter prefixo do local para o nome do arquivo a partir da query
+        place_prefix = unidecode(place_query.split(',')[0].split(' ')[0].lower())
+
         BASE_DIR = getattr(settings, 'BASE_DIR', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         map_data_dir = os.path.join(BASE_DIR, 'map_data')
         os.makedirs(map_data_dir, exist_ok=True)
 
         for nt in network_types_to_fetch:
             self.stdout.write(self.style.NOTICE(f"Attempting to download '{nt}' network for '{place_query}'..."))
-            filename = f"marica_{nt.replace('_', '-')}.graphml" # Ex: marica_drive.graphml, marica_walk.graphml
+            # Utilizar prefix na definição do local do arquivo
+            filename = f"{place_prefix}_{nt.replace('_', '-')}.graphml"
             filepath = os.path.join(map_data_dir, filename)
 
             try:

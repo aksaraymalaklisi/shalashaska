@@ -9,14 +9,18 @@ from .services.pathfinding_service import find_shortest_path
 # Carregar os grafos na inicialização do módulo
 # Isso carrega os grafos uma vez quando o servidor inicia.
 GRAPH_FILENAMES = {
-    'drive': 'marica_drive.graphml',
-    'bike': 'marica_bike.graphml',
-    'walk': 'marica_walk.graphml',
+    'drive': '{}_drive.graphml',
+    'bike': '{}_bike.graphml',
+    'walk': '{}_walk.graphml',
 }
 
 LOADED_GRAPHS = {}
 
-for network_type, filename in GRAPH_FILENAMES.items():
+# Obter o prefixo do local das configurações
+PLACE_PREFIX = getattr(settings, 'OSMNX_PLACE_PREFIX', 'marica')
+
+for network_type, filename_template in GRAPH_FILENAMES.items():
+    filename = filename_template.format(PLACE_PREFIX)
     GRAPH_FILEPATH = os.path.join(settings.BASE_DIR, 'map_data', filename)
     try:
         if os.path.exists(GRAPH_FILEPATH):
@@ -31,7 +35,6 @@ for network_type, filename in GRAPH_FILENAMES.items():
             print(f"Graph '{filename}' loaded successfully for '{network_type}' with {len(G.nodes())} nodes and {len(G.edges())} edges.")
         else:
             print(f"Graph file not found at {GRAPH_FILEPATH} for network type '{network_type}'. Run 'manage.py fetch_map_data' first.")
-            # Note that this function does not exist yet.
     except Exception as e:
         print(f"Error loading graph for '{network_type}' during app initialization: {e}")
 

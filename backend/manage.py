@@ -3,19 +3,6 @@
 import os
 import sys
 
-# (!) Solução temporária para o aviso do GDAL_DATA 
-# Temporária, pois depende do manage.py. Isso não vai rodar em produção.
-# Configure GDAL_DATA if not already set
-if 'GDAL_DATA' not in os.environ:
-    # Try common locations or use environment-specific detection
-    import subprocess
-    try:
-        gdal_data = subprocess.check_output(['gdal-config', '--datadir'], text=True).strip()
-        os.environ['GDAL_DATA'] = gdal_data
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fallback: let GDAL find its own data directory
-        pass
-
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'queequeg.settings')
