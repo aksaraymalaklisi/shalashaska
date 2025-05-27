@@ -1,0 +1,6 @@
+body, html, #root, .App {
+  margin: 0 auto;
+  padding: 0;
+  height: 100%;
+  font-family: 'Comic Sans MS', cursive;
+}
