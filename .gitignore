@@ -1,4 +1,8 @@
 # --- Ignorar arquivos do Django ---
+# Arquivos únicos
+cache
+map_data
+
 # Arquivos de bytecode Python
 *.pyc
 __pycache__/
