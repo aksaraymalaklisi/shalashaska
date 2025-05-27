@@ -1,6 +1,6 @@
 import React from 'react';
-import MapDisplayWithClickHandler from './components/MapDisplay'; // Importe o MapDisplay (ou MapDisplayWithClickHandler)
-import './App.css'; // Ou qualquer CSS que você tenha
+import MapDisplay from './components/MapDisplay'; // Importar o componente do mapa
+import './App.css';
 
 function App() {
   return (
@@ -9,7 +9,7 @@ function App() {
         <h1>Visualizador de Rota - Maricá</h1>
       </header>
       <main style={{padding: '10px'}}>
-        <MapDisplayWithClickHandler />
+        <MapDisplay />
       </main>
     </div>
   );
