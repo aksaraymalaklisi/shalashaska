@@ -1,0 +1,11 @@
+name: shalashaska
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - django
+  - django-cors-headers
+  - osmnx
+  - python-dotenv
+  - unidecode

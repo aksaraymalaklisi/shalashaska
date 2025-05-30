@@ -1,28 +1,34 @@
-# Use imagem base com OSMnx e Conda já instalados (Python 3.13)
-FROM ghcr.io/osmnx/osmnx:latest
+# Stage 1: Build environment and dependencies
+FROM condaforge/miniforge3:latest AS builder
 
-# Diretório de trabalho
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copia o requirements.txt do ambiente (Conda)
-COPY requirements.txt /tmp/requirements.txt
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gdal-bin \
+    libgdal-dev \
+    libproj-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Cria o ambiente Conda e ativa
-RUN conda create -n pequod --file /tmp/requirements.txt python=3.13 && \
-    conda clean -afy
+COPY environment.yml .
+RUN conda env create -f environment.yml
 
-# Copia o backend para o contêiner
-COPY backend/ /app/
+COPY . .
 
-# Ativa o ambiente e instala Gunicorn (caso não esteja no requirements)
-RUN /bin/bash -c "source /opt/conda/etc/profile.d/conda.sh && conda activate pequod && pip install gunicorn"
+RUN /bin/bash -c "source activate shalashaska && pip install gunicorn"
 
-# Expõe a porta padrão do Gunicorn
-EXPOSE 8000
+# Stage 2: Distroless runtime
+FROM gcr.io/distroless/base-debian12
 
-# Define variáveis de ambiente para o Django
-ENV DJANGO_SETTINGS_MODULE=queequeg.settings
+WORKDIR /usr/src/app
+
+# Copie o ambiente conda pronto
+COPY --from=builder /opt/conda/envs/shalashaska /opt/conda/envs/shalashaska
+COPY --from=builder /usr/src/app /usr/src/app
+
+ENV PATH="/opt/conda/envs/shalashaska/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
-# Entrypoint: ativa o ambiente Conda e executa o Gunicorn
-ENTRYPOINT ["/bin/bash", "-c", "source /opt/conda/etc/profile.d/conda.sh && conda activate pequod && gunicorn queequeg.wsgi:application --bind 0.0.0.0:8000"]
+EXPOSE 8000
+
+CMD ["gunicorn", "queequeg.wsgi:application", "--bind", "0.0.0.0:8000"]
