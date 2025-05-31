@@ -10,4 +10,4 @@ DJANGO_ALLOWED_HOSTS=<hosts>
 OSMNX_PLACE_PREFIX=<prefixo_do_local_carregado>
 
 VITE_API_BASE=<site_da_api>
-´´´
+```
