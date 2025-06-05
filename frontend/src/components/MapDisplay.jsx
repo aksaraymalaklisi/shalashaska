@@ -22,6 +22,8 @@ function MapDisplay() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [networkType, setNetworkType] = useState('drive'); // Novo estado para o tipo de rede
+    const [distance, setDistance] = useState(null);
+    const [estimatedTime, setEstimatedTime] = useState(null);
 
     const handleMapClick = (e) => {
         if (!startPoint) {
@@ -66,12 +68,18 @@ function MapDisplay() {
             if (data.path_coordinates && data.path_coordinates.length > 0) {
                 const leafletPath = data.path_coordinates.map(coord => [coord.lat, coord.lon]);
                 setPath(leafletPath);
+                setDistance(data.total_length_meters);
+                setEstimatedTime(data.estimated_time_minutes);
             } else {
                 setError(data.error || "Nenhum caminho encontrado ou caminho vazio retornado.");
+                setDistance(null);
+                setEstimatedTime(null);
             }
         } catch (err) {
             console.error("Erro ao buscar rota:", err);
             setError(err.message || "Falha ao buscar a rota.");
+            setDistance(null);
+            setEstimatedTime(null);
         } finally {
             setLoading(false);
         }
@@ -82,6 +90,8 @@ function MapDisplay() {
         setEndPoint(null);
         setPath([]);
         setError('');
+        setDistance(null);
+        setEstimatedTime(null);
     }
 
     return (
@@ -114,6 +124,14 @@ function MapDisplay() {
                 Limpar Pontos
             </button>
             {error && <p style={{ color: 'red', marginTop: '10px' }}>Erro: {error}</p>}
+
+            {/* Resultados da rota */}
+            {distance !== null && estimatedTime !== null && (
+                <div style={{marginTop: '10px', padding: '8px', background: '#f8f9fa', borderRadius: '4px'}}>
+                    <strong>Distância total:</strong> {(distance/1000).toFixed(2)} km<br/>
+                    <strong>Tempo estimado:</strong> {estimatedTime.toFixed(1)} minutos
+                </div>
+            )}
         </div>
 
         <MapContainer 

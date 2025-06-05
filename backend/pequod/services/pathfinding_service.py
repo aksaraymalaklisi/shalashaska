@@ -1,7 +1,19 @@
 import osmnx as ox
 import networkx as nx
 
-def find_shortest_path(G, start_lat, start_lon, end_lat, end_lon):
+# Isso assume valores hard-coded para os tipos de rede.
+# O certo seria seria permitir uma configuração, provavelmente um parâmetro da função, recebido da API.
+# Como o objetivo é entregar algo funcional e apresentável, será mantido assim, por qnaunto.
+def get_average_speed_kmh(network_type):
+    if network_type == 'drive':
+        return 40  # km/h 
+    elif network_type == 'bike':
+        return 15  # km/h
+    elif network_type == 'walk':
+        return 5   # km/h
+    return 10  # padrão
+
+def find_shortest_path(G, start_lat, start_lon, end_lat, end_lon, network_type=None):
     """
     Encontra o caminho mais curto entre dois pontos em um grafo usando Dijkstra.
 
@@ -11,9 +23,10 @@ def find_shortest_path(G, start_lat, start_lon, end_lat, end_lon):
         start_lon: Longitude do ponto de início.
         end_lat: Latitude do ponto de fim.
         end_lon: Longitude do ponto de fim.
+        network_type: Tipo de rede (ex: 'drive', 'bike', 'walk').
 
     Returns:
-        Um dicionário contendo as coordenadas do caminho e o comprimento total,
+        Um dicionário contendo as coordenadas do caminho, o comprimento total e o tempo estimado,
         ou levanta uma exceção se o caminho não for encontrado ou ocorrer um erro.
     """
     try:
@@ -57,11 +70,17 @@ def find_shortest_path(G, start_lat, start_lon, end_lat, end_lon):
                     end_node_data = G.nodes[v]
                     path_coordinates.append({'lat': end_node_data['y'], 'lon': end_node_data['x']})
 
+        # Calcular tempo estimado
+        speed_kmh = get_average_speed_kmh(network_type) if network_type else 10
+        speed_m_per_min = (speed_kmh * 1000) / 60
+        estimated_time_minutes = round(path_length_meters / speed_m_per_min, 1)
+
         return {
             'start_node_osmid': start_node_osmid,
             'end_node_osmid': end_node_osmid,
             'path_coordinates': path_coordinates,
-            'total_length_meters': round(path_length_meters, 2)
+            'total_length_meters': round(path_length_meters, 2),
+            'estimated_time_minutes': estimated_time_minutes
         }
 
     except nx.NetworkXNoPath:

@@ -68,15 +68,16 @@ def pathfinder_view(request, network_type):
             return JsonResponse({'error': 'Invalid latitude/longitude parameters. Must be numbers.'}, status=400)
 
         try:
-            # Chama a função de serviço para encontrar o caminho
-            path_data = find_shortest_path(G, start_lat, start_lon, end_lat, end_lon)
+            # Chama a função do serviço de pathfinding para encontrar o caminho
+            path_data = find_shortest_path(G, start_lat, start_lon, end_lat, end_lon, network_type=network_type)
 
             return JsonResponse({
                 'message': 'Route found successfully!',
                 'start_point': {'lat': start_lat, 'lon': start_lon, 'nearest_node_osmid': path_data['start_node_osmid']},
                 'end_point': {'lat': end_lat, 'lon': end_lon, 'nearest_node_osmid': path_data['end_node_osmid']},
                 'path_coordinates': path_data['path_coordinates'],
-                'total_length_meters': path_data['total_length_meters']
+                'total_length_meters': path_data['total_length_meters'],
+                'estimated_time_minutes': path_data['estimated_time_minutes']
             })
 
         except nx.NetworkXNoPath as e:
