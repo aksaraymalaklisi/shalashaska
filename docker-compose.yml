@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: shalashaska-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/usr/src/app
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: shalashaska-frontend
+    ports:
+      - "2133:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
