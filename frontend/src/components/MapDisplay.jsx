@@ -7,6 +7,15 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from '
 // Coordenadas aproximadas do centro de Maricá, RJ, para visualização inicial
 const maricaCenter = [-22.9186, -42.8186];
 
+// Define o caminho para os ícones padrão do Leaflet, que se perdem no build.
+// Esta é a correção para os marcadores que desaparecem.
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+});
+
 // Componente para lidar com cliques no mapa
 function MapClickHandler({ onMapClick }) {
     useMapEvents({
@@ -69,7 +78,9 @@ function MapDisplay() {
             params.append('average_speed_kmh', avgSpeed);
         }
         
-        const apiUrl = `http://localhost:7777/api/pequod/pathfinder/${networkType}/?${params}`;
+        // Para builds diferentes
+        const apiHost = import.meta.env.VITE_API_HOST || 'https://joyful.aksaraymalaklisi.net';
+        const apiUrl = `${apiHost}/api/pequod/pathfinder/${networkType}/?${params}`;
 
         try {
             const response = await fetch(apiUrl);
