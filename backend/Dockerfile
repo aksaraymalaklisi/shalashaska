@@ -29,6 +29,6 @@ COPY --from=builder /usr/src/app /usr/src/app
 ENV PATH="/opt/conda/envs/shalashaska/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 8000
+EXPOSE 7777
 
-CMD ["gunicorn", "queequeg.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["gunicorn", "queequeg.wsgi:application", "--bind", "0.0.0.0:7777"]

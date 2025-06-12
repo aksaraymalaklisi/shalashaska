@@ -4,7 +4,7 @@ services:
       context: ./backend
     container_name: shalashaska-backend
     ports:
-      - "8000:8000"
+      - "7777:7777"
     volumes:
       - ./backend:/usr/src/app
     restart: unless-stopped
@@ -14,7 +14,13 @@ services:
       context: ./frontend
     container_name: shalashaska-frontend
     ports:
-      - "2133:80" # Porta esquisita. Tenho que trocar isso depois.
+      - "8888:8888"
     depends_on:
       - backend
     restart: unless-stopped
+
+# Usado em produção
+networks:
+  default:
+    name: $DOCKER_NETWORK
+    external: true
