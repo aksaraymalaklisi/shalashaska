@@ -12,10 +12,16 @@ COPY . .
 RUN npm run build
 
 # Servidor estático para rodar servir o frontend
-FROM nginx:alpine
+# Usando Node e serve para eu não ter que configar o Nginx
+# (e possivelmente deixar minha vida mais fácil)
+FROM node:22-slim
 
-COPY --from=build /usr/src/app/dist /usr/share/nginx/html
+WORKDIR /usr/src/app
 
-EXPOSE 80
+RUN npm install -g serve
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=build /usr/src/app/dist ./dist
+
+EXPOSE 8888
+
+CMD ["serve", "-s", "dist", "-l", "8888"]
