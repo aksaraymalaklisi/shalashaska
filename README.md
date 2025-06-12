@@ -39,7 +39,7 @@ No diretório do frontend, rode:
 `npm install`
 
 E rode o servidor:
-`npm run server`
+`npm run dev`
 
 ## A .env
 
