@@ -1,11 +1,13 @@
 name: shalashaska
 channels:
-  - conda-forge
   - defaults
 dependencies:
-  - python
-  - django
+  - unidecode
   - django-cors-headers
   - osmnx
   - python-dotenv
-  - unidecode
+  - python
+  - django
+  - drf-yasg
+  - djangorestframework
+  - geopy

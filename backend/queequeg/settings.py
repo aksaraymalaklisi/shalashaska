@@ -63,7 +63,10 @@ else:
     ALLOWED_HOSTS = []
 
 # Configurações do OSMnx 
+# São apenas para consultos padrões. Dito isso, o map_utils deve se encarregar de baixar grafos na hora.
+# Isso vai ser um esculacho no servidor. Contudo, se necessário, será desativado.
 OSMNX_PLACE_PREFIX = os.environ.get('OSMNX_PLACE_PREFIX', 'marica') # Utilizar 'marica' como padrão
+OSMNX_PLACE_QUERY = os.environ.get('OSMNX_PLACE_PREFIX', 'Maricá, RJ, Brazil') # 'Maricá, RJ, Brazil' como padrão
 
 # Application definition
 
@@ -75,6 +78,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders', # CORS headers
+    'rest_framework', # oops, esqueci de adicionar isso
     'pequod.apps.PequodConfig' # Nome do aplicativo de rotas
 
 ]
@@ -162,14 +166,25 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173", # Porta do servidor de desenvolvimento do Vite
-    "http://127.0.0.1:5173",
+# Obrigado, Copilot.
+CORS_ALLOWED_ORIGINS_STR = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', '')
+if CORS_ALLOWED_ORIGINS_STR:
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_STR.split(',')] # Esse negócio é muito tenebroso, aliás.
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173", # Porta do servidor de desenvolvimento do Vite
+        "http://127.0.0.1:5173",
+        "http://localhost:8888",
+        "http://127.0.0.1:8888",
+    ]
 
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+CSRF_TRUSTED_ORIGINS_STR = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+if CSRF_TRUSTED_ORIGINS_STR:
+    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS_STR.split(',')]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8888",
+        "http://127.0.0.1:8888",
+    ]

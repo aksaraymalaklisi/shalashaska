@@ -1,9 +1,12 @@
 from django.urls import path
-from . import views # Importa as views do app atual
-
-# Padrão para namespaces de URL (recomendado)
-app_name = 'pequod'
+from .views import PathfinderView  # Importe a nova classe
 
 urlpatterns = [
-    path('pathfinder/<str:network_type>/', views.pathfinder_view, name='pathfinder'),
+    # A URL pode permanecer a mesma, mas agora aponta para a view do DRF
+    path(
+        'pathfinder/<str:network_type>/', 
+        PathfinderView.as_view(), 
+        name='pathfinder_api'
+    ),
+    # ... outras urls do seu app
 ]

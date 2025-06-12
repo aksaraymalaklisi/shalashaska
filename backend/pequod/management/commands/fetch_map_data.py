@@ -4,12 +4,12 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from unidecode import unidecode
 
-
 # Simplificar o comando e baixar novos tipos de redes
 # O comando a seguir agora irá baixar três tipos de rede por padrão: 
 # python manage.py fetch_map_data "Maricá, RJ, Brazil"
 # ou você pode especificar com --network_types:
 # python manage.py fetch_map_data "Maricá, RJ, Brazil" --network_types drive walk bike
+
 class Command(BaseCommand):
     help = 'Downloads map data from OpenStreetMap for specified network types and saves them.'
 
