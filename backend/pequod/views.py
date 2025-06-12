@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 # Importar services e serializers
-from .services.pathfinding_service import find_shortest_path
+from .services.pathfinding_service import find_path
 from .services.map_utils import download_graph, get_map_key_and_filepath, get_place_name_from_coords
 from .serializers import PathfindingRequestSerializer
 
@@ -70,7 +70,7 @@ class PathfinderView(APIView):
 
         # 2. Execução do algoritmo de Dijkstra (pathfinding)
         try:
-            path_data = find_shortest_path(
+            path_data = find_path(
                 G=G,
                 start_lat=validated_data['start_lat'],
                 start_lon=validated_data['start_lon'],
