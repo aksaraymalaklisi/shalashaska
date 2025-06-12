@@ -1,43 +1,50 @@
-import React, { useState, useEffect } from 'react';
+// Isso é uma página praticamente.
+
+// Imports
+import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
 
-// Coordenadas aproximadas do centro de Maricá, RJ
-const maricaCenter = [-22.9186, -42.8186]; 
+// Coordenadas aproximadas do centro de Maricá, RJ, para visualização inicial
+const maricaCenter = [-22.9186, -42.8186];
 
-// Componente wrapper para usar useMapEvents (forma correta de lidar com cliques no mapa)
-function MapClickHandler({ onMapClick }) { // Import dinâmico para evitar problemas no lado do servidor se houver
-    const map = useMapEvents({
+// Componente para lidar com cliques no mapa
+function MapClickHandler({ onMapClick }) {
+    useMapEvents({
         click(e) {
-            onMapClick(e);
+            onMapClick(e.latlng);
         },
     });
     return null;
 }
 
-// O componente MapDisplay por padrão irá usar o MapClickHandler.
+// Componente principal do site
 function MapDisplay() {
+
     const [startPoint, setStartPoint] = useState(null);
     const [endPoint, setEndPoint] = useState(null);
-    const [path, setPath] = useState([]);
+    const [pathSegments, setPathSegments] = useState([]); // Estado para os segmentos da rota
+
+    // Estados para os controles da UI
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [networkType, setNetworkType] = useState('drive'); // Novo estado para o tipo de rede
-    const [distance, setDistance] = useState(null);
-    const [estimatedTime, setEstimatedTime] = useState(null);
+    const [networkType, setNetworkType] = useState('drive');
+    const [optimizeFor, setOptimizeFor] = useState('length');
+    const [avgSpeed, setAvgSpeed] = useState('');
+    const [isMenuOpen, setIsMenuOpen] = useState(false); // Estado para o menu mobile
 
-    const handleMapClick = (e) => {
-        if (!startPoint) {
-            setStartPoint(e.latlng);
-            setPath([]); 
-            setError('');
-        } else if (!endPoint) {
-            setEndPoint(e.latlng);
-        } else { 
-            setStartPoint(e.latlng);
+    // Estados para os resultados da rota
+    const [totalDistance, setTotalDistance] = useState(null);
+    const [totalTime, setTotalTime] = useState(null);
+
+    const handleMapClick = (latlng) => {
+        if (!startPoint) setStartPoint(latlng);
+        else if (!endPoint) setEndPoint(latlng);
+        else {
+            setStartPoint(latlng);
             setEndPoint(null);
-            setPath([]);
-            setError('');
         }
+        setPathSegments([]);
+        setError('');
     };
 
     const fetchRoute = async () => {
@@ -47,16 +54,22 @@ function MapDisplay() {
         }
         setLoading(true);
         setError('');
-        setPath([]);
+        setPathSegments([]);
 
         const params = new URLSearchParams({
             start_lat: startPoint.lat,
             start_lon: startPoint.lng,
             end_lat: endPoint.lat,
             end_lon: endPoint.lng,
+            optimize_for: optimizeFor,
         });
-        // Modifica a URL para incluir o tipo de rede, com fallback para localhost
-        const apiUrl = `${import.meta.env.VITE_API_BASE || 'http://localhost:7777'}/api/pequod/pathfinder/${networkType}/?${params}`;
+
+        // Adiciona a velocidade média apenas se o campo for preenchido
+        if (avgSpeed) {
+            params.append('average_speed_kmh', avgSpeed);
+        }
+        
+        const apiUrl = `http://localhost:7777/api/pequod/pathfinder/${networkType}/?${params}`;
 
         try {
             const response = await fetch(apiUrl);
@@ -65,21 +78,16 @@ function MapDisplay() {
                 throw new Error(errData.error || `Erro na API: ${response.statusText}`);
             }
             const data = await response.json();
-            if (data.path_coordinates && data.path_coordinates.length > 0) {
-                const leafletPath = data.path_coordinates.map(coord => [coord.lat, coord.lon]);
-                setPath(leafletPath);
-                setDistance(data.total_length_meters);
-                setEstimatedTime(data.estimated_time_minutes);
+            
+            if (data.path_segments && data.path_segments.length > 0) {
+                setPathSegments(data.path_segments);
+                setTotalDistance(data.total_length_meters);
+                setTotalTime(data.total_time_minutes);
             } else {
-                setError(data.error || "Nenhum caminho encontrado ou caminho vazio retornado.");
-                setDistance(null);
-                setEstimatedTime(null);
+                setError(data.error || "Nenhum caminho encontrado.");
             }
         } catch (err) {
-            console.error("Erro ao buscar rota:", err);
             setError(err.message || "Falha ao buscar a rota.");
-            setDistance(null);
-            setEstimatedTime(null);
         } finally {
             setLoading(false);
         }
@@ -88,94 +96,100 @@ function MapDisplay() {
     const clearPoints = () => {
         setStartPoint(null);
         setEndPoint(null);
-        setPath([]);
+        setPathSegments([]);
         setError('');
-        setDistance(null);
-        setEstimatedTime(null);
-    }
+        setTotalDistance(null);
+        setTotalTime(null);
+    };
 
     return (
-        <div>
-        <div style={{ marginBottom: '10px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
-            <h4>Planejador de Rotas</h4>
-            <p>Clique no mapa para definir o ponto de partida, depois o ponto de destino.</p>
-            {startPoint && <p><strong>Partida (Clique):</strong> Lat: {startPoint.lat.toFixed(5)}, Lng: {startPoint.lng.toFixed(5)}</p>}
-            {endPoint && <p><strong>Destino (Clique):</strong> Lat: {endPoint.lat.toFixed(5)}, Lng: {endPoint.lng.toFixed(5)}</p>}
+        <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans">
+            {/* Painel de Controle (Lateral) */}
+            <div className="w-full md:w-96 p-4 md:p-6 bg-white shadow-lg md:overflow-y-auto shrink-0">
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold text-slate-800">Pequod</h1>
+                    {/* Botão do menu dropdown visível apenas em telas pequenas (mobile) */}
+                    <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-2 rounded-md hover:bg-slate-100">
+                        <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                        </svg>
+                        <span className="sr-only">Abrir menu de opções</span>
+                    </button>
+                </div>
+                
+                <p className="text-sm text-slate-600 mb-6 hidden md:block">Selecione o ponto de partida e destino no mapa.</p>
+                
+                {/* Container das OPÇÕES, que será ocultado/mostrado em mobile */}
+                <div className={`${isMenuOpen ? 'block' : 'hidden'} md:block`}>
+                    <div className="space-y-4 mb-6">
+                        <div>
+                            <label htmlFor="networkType" className="block text-sm font-medium text-slate-700">Tipo de rede</label>
+                            <select id="networkType" value={networkType} onChange={(e) => setNetworkType(e.target.value)} className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="drive">Carro</option>
+                                <option value="bike">Bicicleta</option>
+                                <option value="walk">Caminhada</option>
+                                <option value="all">Todos (All)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="optimizeFor" className="block text-sm font-medium text-slate-700">Otimizar para</label>
+                            <select id="optimizeFor" value={optimizeFor} onChange={(e) => setOptimizeFor(e.target.value)} className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="length">Distância (Mais Curto)</option>
+                                <option value="time">Tempo (Mais Rápido)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="avgSpeed" className="block text-sm font-medium text-slate-700">Velocidade média (km/h) <span className="text-xs text-slate-500">(Opcional)</span></label>
+                            <input type="number" id="avgSpeed" value={avgSpeed} onChange={(e) => setAvgSpeed(e.target.value)} placeholder="Ex: 60" className="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                    </div>
+                </div>
 
-            {/* Seletor para o tipo de rede */}
-            <div style={{ marginBottom: '10px' }}>
-                <label htmlFor="networkType">Tipo de Rede:</label>
-                <select
-                    id="networkType"
-                    value={networkType}
-                    onChange={(e) => setNetworkType(e.target.value)}
-                    style={{ marginLeft: '10px', padding: '5px' }}
-                >
-                    <option value="drive">Carro</option>
-                    <option value="bike">Bicicleta</option>
-                    <option value="walk">Caminhada</option>
-                </select>
+                {/* Botões e resultados agora ficam FORA do container do menu */}
+                <div className="flex space-x-3">
+                    <button onClick={fetchRoute} disabled={!startPoint || !endPoint || loading} className="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow-sm hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors">
+                        {loading ? 'Calculando...' : 'Encontrar Rota'}
+                    </button>
+                    <button onClick={clearPoints} className="px-4 py-2 bg-slate-600 text-white font-semibold rounded-md shadow-sm hover:bg-slate-700 transition-colors">
+                        Limpar
+                    </button>
+                </div>
+
+                {error && <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">{error}</div>}
+                
+                {totalDistance !== null && !error && (
+                    <div className="mt-4 p-3 bg-slate-100 text-slate-800 rounded-md space-y-1">
+                        <p><strong>Distância:</strong> {(totalDistance / 1000).toFixed(2)} km</p>
+                        <p><strong>Tempo Estimado:</strong> {totalTime.toFixed(1)} minutos</p>
+                    </div>
+                )}
             </div>
 
-            <button onClick={fetchRoute} disabled={!startPoint || !endPoint || loading} style={{padding: '8px 12px', marginRight: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                {loading ? 'Calculando...' : 'Encontrar Rota'}
-            </button>
-            <button onClick={clearPoints} style={{padding: '8px 12px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>
-                Limpar Pontos
-            </button>
-            {error && <p style={{ color: 'red', marginTop: '10px' }}>Erro: {error}</p>}
+            {/* Mapa */}
+            <div className="flex-1 h-full w-full">
+                <MapContainer center={maricaCenter} zoom={13} className="h-full w-full">
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+                    <MapClickHandler onMapClick={handleMapClick} />
+                    
+                    {startPoint && <Marker position={startPoint}><Popup>Ponto de Partida</Popup></Marker>}
+                    {endPoint && <Marker position={endPoint}><Popup>Ponto de Destino</Popup></Marker>}
+                    
+                    {pathSegments.map((segment, index) => {
+                        const isAffected = !!segment.applied_condition;
+                        const pathColor = isAffected ? '#F97316' : '#2563EB'; // Laranja e Azul do Tailwind
+                        const coordinates = segment.coordinates.map(c => [c.lat, c.lon]);
 
-            {/* Resultados da rota */}
-            {distance !== null && estimatedTime !== null && (
-                <div style={{marginTop: '10px', padding: '8px', background: '#f8f9fa', borderRadius: '4px'}}>
-                    <strong>Distância total:</strong> {(distance/1000).toFixed(2)} km<br/>
-                    <strong>Tempo estimado:</strong> {estimatedTime.toFixed(1)} minutos
-                </div>
-            )}
+                        return (
+                            <Polyline key={index} positions={coordinates} color={pathColor} weight={5} opacity={0.8}>
+                                {isAffected && (
+                                    <Popup><b>Condição:</b> {segment.applied_condition.description}</Popup>
+                                )}
+                            </Polyline>
+                        );
+                    })}
+                </MapContainer>
+            </div>
         </div>
-
-        <MapContainer 
-            center={maricaCenter} // Lembre-se de que maricaCenter deve estar definido
-            zoom={13} 
-            style={{ height: 'calc(100vh - 200px)', width: '100%', border: '1px solid #000' }}
-        >
-            <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <MapClickHandler onMapClick={handleMapClick} /> {/* Componente para lidar com cliques */}
-            
-            {/* Marcadores para os pontos clicados pelo usuário */}
-            {startPoint && <Marker position={startPoint}><Popup>Ponto de Partida (Seu clique)</Popup></Marker>}
-            {endPoint && <Marker position={endPoint}><Popup>Ponto de Destino (Seu clique)</Popup></Marker>}
-            
-            {/* Polyline para a rota principal calculada */}
-            {path.length > 0 && <Polyline positions={path} color="blue" weight={5} />}
-
-            {/* NOVAS POLYLINES PARA CONECTAR OS CLIQUES À ROTA */}
-            {/* Linha do clique de partida até o início real da rota */}
-            {startPoint && path.length > 0 && path[0] && (
-              <Polyline
-                positions={[[startPoint.lat, startPoint.lng], path[0]]} 
-                // path[0] é o primeiro ponto [lat, lng] da rota calculada
-                color="green" // Ou uma cor que indique "início"
-                weight={3}
-                dashArray="5, 5" // Faz a linha ser pontilhada/tracejada
-              />
-            )}
-
-            {/* Linha do clique de destino até o fim real da rota */}
-            {endPoint && path.length > 0 && path[path.length - 1] && (
-              <Polyline
-                positions={[[endPoint.lat, endPoint.lng], path[path.length - 1]]} 
-                // path[path.length - 1] é o último ponto [lat, lng] da rota calculada
-                color="red" // Ou uma cor que indique "fim"
-                weight={3}
-                dashArray="5, 5"
-              />
-            )}
-        </MapContainer>
-    </div>
     );
 }
 
