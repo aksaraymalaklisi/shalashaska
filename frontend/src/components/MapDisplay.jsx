@@ -79,7 +79,7 @@ function MapDisplay() {
         }
         
         // Para builds diferentes
-        const apiHost = import.meta.env.VITE_API_HOST || 'https://joyful.aksaraymalaklisi.net';
+        const apiHost = import.meta.env.VITE_API_HOST || 'http://localhost:7777';
         const apiUrl = `${apiHost}/api/pequod/pathfinder/${networkType}/?${params}`;
 
         try {
